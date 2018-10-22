@@ -6,30 +6,46 @@ library(gridExtra)
 
 filename = Sys.getenv('DATASET')
 if (filename != ""){
-  dataset = readRDS(filename)
+  dataset <- readRDS(filename)
 }else{
-  dataset = readRDS('dataset.RDS')
+  dataset <- readRDS('dataset.RDS')
 }
 
 server <- function(input,output,session)
 {
-  observe({updateSelectizeInput(session, "gene", 
-                                choices=sort(rownames(dataset[[input$dataset]][['data']])), 
-                                selected=sort(rownames(dataset[[input$dataset]][['data']]))[1], server=TRUE)})
+  output$dataset <-  renderUI({
+    selectInput("data", "Dataset", choices = names(dataset))
+  })
+  
+  data <- reactive({
+    dataset[[input$data]]
+  })
+  
+  genes <- reactive({
+    sort(rownames(data()[['data']]))
+  })
+  
+  output$gene <-  renderUI({
+    if(!is.null(input$data)) {
+      selectizeInput("gene", label = "Gene", 
+                   choices=genes(), options = list(maxOptions = 34000))
+    }
+  })
+
   get_tsne <- eventReactive(input$do,{
-    tsne = dataset[[input$dataset]][['tsne']]
+    tsne = data()[['tsne']]
     tsne
   })
   get_tsne_gene <- eventReactive(input$do,{
-    tsne = dataset[[input$dataset]][['tsne']]
-    tsne$gene = dataset[[input$dataset]][['data']][input$gene,]
+    tsne = data()[['tsne']]
+    tsne$gene = data()[['data']][input$gene,]
     tsne
   })
   get_cluster_labels <- eventReactive(input$do,{
-    tsne = dataset[[input$dataset]][['tsne']]
-    cluslab = matrix(0,length(unique(dataset[[input$dataset]][['tsne']]$clus)),2)
-    rownames(cluslab) = unique(dataset[[input$dataset]][['tsne']]$clus)
-    for (clus in unique(dataset[[input$dataset]][['tsne']]$clus))
+    tsne = data()[['tsne']]
+    cluslab = matrix(0,length(unique(data()[['tsne']]$clus)),2)
+    rownames(cluslab) = unique(data()[['tsne']]$clus)
+    for (clus in unique(data()[['tsne']]$clus))
     {
       cluslab[clus,1] = median(tsne[tsne$clus==clus,1])
       cluslab[clus,2] = median(tsne[tsne$clus==clus,2])
@@ -39,8 +55,8 @@ server <- function(input,output,session)
     cluslab
   })
   get_heatmap <- eventReactive(input$do,{
-    tsne = dataset[[input$dataset]][['tsne']]
-    tsne$gene = dataset[[input$dataset]][['data']][input$gene,]
+    tsne = data()[['tsne']]
+    tsne$gene = data()[['data']][input$gene,]
     heatmat = matrix(0,length(unique(tsne$clus)),
                      length(unique(tsne$loc)))
     rownames(heatmat) = unique(tsne$clus)
