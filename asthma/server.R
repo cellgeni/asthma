@@ -8,7 +8,7 @@ filename = Sys.getenv('DATASET')
 if (filename != ""){
   dataset <- readRDS(filename)
 }else{
-  dataset <- readRDS('dataset.RDS')
+  dataset <- readRDS('/data/dataset.RDS')
 }
 
 server <- function(input,output,session)
