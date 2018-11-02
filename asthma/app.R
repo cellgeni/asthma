@@ -4,7 +4,12 @@ library(ggplot2)
 library(reshape2)
 library(gridExtra)
 
-megasrat = readRDS('dataset.RDS')
+filename = Sys.getenv('DATASET')
+if (filename != ""){
+  megasrat <- readRDS(filename)
+}else{
+  megasrat <- readRDS('/data/dataset.RDS')
+}
 
 ui <- fluidPage(
   titlePanel("Lung Cell Atlas"),
