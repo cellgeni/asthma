@@ -4,48 +4,70 @@ library(ggplot2)
 library(reshape2)
 library(gridExtra)
 
-filename = Sys.getenv('DATASET')
-if (filename != ""){
-  dataset <- readRDS(filename)
-}else{
-  dataset <- readRDS('dataset.RDS')
-}
+megasrat = readRDS('dataset.RDS')
+
+ui <- fluidPage(
+  titlePanel("Lung Cell Atlas"),
+    sidebarPanel(
+      selectizeInput(
+        "gene", 
+        label = "Select or type a Gene name:", 
+        choices=sort(rownames(megasrat[[1]][['data']])), 
+        selected=sort(rownames(megasrat[[1]][['data']]))[1]
+      ),
+      selectInput("dataset", "Select a Dataset", choices = names(megasrat)),
+      actionButton("do", "Update View", icon=icon("refresh")
+    )
+  ),
+    mainPanel(
+      conditionalPanel(
+        condition="$('html').hasClass('shiny-busy')",
+        fluidRow(
+          column(
+            width = 8,
+            tags$div(
+              HTML(
+                "<br><br><br><br>
+                <div class='progress progress-striped active'>
+                <div class='progress-bar' style='width: 100%'>
+                Loading...</div>
+                </div>"
+              )
+            ), 
+            offset = 2
+          )
+        )
+      ),
+      conditionalPanel(
+        condition="!$('html').hasClass('shiny-busy')",
+        fluidRow(
+          splitLayout(cellWidths = c("50%", "50%"), 
+                                   plotOutput("plotgraph1"), plotOutput("plotgraph2"))),
+        fluidRow(
+          splitLayout(cellWidths = c("50%", "50%"), 
+                                   plotOutput("plotgraph3"), plotOutput("plotgraph4"))))
+      )
+    )
 
 server <- function(input,output,session)
 {
-  output$dataset <-  renderUI({
-    selectInput("data", "Dataset", choices = names(dataset))
-  })
-  
-  data <- reactive({
-    dataset[[input$data]]
-  })
-  
-  genes <- reactive({
-    sort(rownames(data()[['data']]))
-  })
-  
-  output$gene <-  renderUI({
-    if(!is.null(input$data)) {
-      selectizeInput("gene", label = "Gene", 
-                   choices=genes(), options = list(maxOptions = 34000))
-    }
-  })
-
+  observe({updateSelectizeInput(session, "gene", 
+                                choices=sort(rownames(megasrat[[input$dataset]][['data']])), 
+                                selected=sort(rownames(megasrat[[input$dataset]][['data']]))[1], server=TRUE)})
   get_tsne <- eventReactive(input$do,{
-    tsne = data()[['tsne']]
+    tsne = megasrat[[input$dataset]][['tsne']]
     tsne
   })
   get_tsne_gene <- eventReactive(input$do,{
-    tsne = data()[['tsne']]
-    tsne$gene = data()[['data']][input$gene,]
+    tsne = megasrat[[input$dataset]][['tsne']]
+    tsne$gene = megasrat[[input$dataset]][['data']][input$gene,]
     tsne
   })
   get_cluster_labels <- eventReactive(input$do,{
-    tsne = data()[['tsne']]
-    cluslab = matrix(0,length(unique(data()[['tsne']]$clus)),2)
-    rownames(cluslab) = unique(data()[['tsne']]$clus)
-    for (clus in unique(data()[['tsne']]$clus))
+    tsne = megasrat[[input$dataset]][['tsne']]
+    cluslab = matrix(0,length(unique(megasrat[[input$dataset]][['tsne']]$clus)),2)
+    rownames(cluslab) = unique(megasrat[[input$dataset]][['tsne']]$clus)
+    for (clus in unique(megasrat[[input$dataset]][['tsne']]$clus))
     {
       cluslab[clus,1] = median(tsne[tsne$clus==clus,1])
       cluslab[clus,2] = median(tsne[tsne$clus==clus,2])
@@ -55,8 +77,8 @@ server <- function(input,output,session)
     cluslab
   })
   get_heatmap <- eventReactive(input$do,{
-    tsne = data()[['tsne']]
-    tsne$gene = data()[['data']][input$gene,]
+    tsne = megasrat[[input$dataset]][['tsne']]
+    tsne$gene = megasrat[[input$dataset]][['data']][input$gene,]
     heatmat = matrix(0,length(unique(tsne$clus)),
                      length(unique(tsne$loc)))
     rownames(heatmat) = unique(tsne$clus)
@@ -77,9 +99,9 @@ server <- function(input,output,session)
   })
   output$plotgraph1<-renderPlot({
     ggplot(get_tsne(),aes(x=tSNE_1,y=tSNE_2,color=clus)) + 
-      geom_point(size=0.0001) + theme(legend.position = "none") +
+      geom_point(size=0.0001) + theme(legend.position = "none") + 
       geom_text(data = get_cluster_labels(), mapping = aes(x = X1, y = X2, label = clus), 
-                size = 4, colour='black') + ggtitle(isolate(input$dataset)) + 
+                size = 4, colour='black') + ggtitle(isolate(input$dataset)) + scale_colour_hue() +
       theme(plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), 
             panel.grid.minor = element_blank(), panel.background = element_blank(), 
             axis.line = element_line(colour = "black"))
@@ -108,3 +130,5 @@ server <- function(input,output,session)
       theme(axis.text.x = element_text(angle=90, hjust=1), axis.title.y=element_blank())
   })
 }
+
+shinyApp(ui, server)
