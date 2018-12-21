@@ -104,7 +104,7 @@ server <- function(input,output,session)
   })
   output$plotgraph1<-renderPlot({
     ggplot(get_tsne(),aes(x=tSNE_1,y=tSNE_2,color=clus)) + 
-      geom_point(size=0.0001) + theme(legend.position = "none") + 
+      geom_point(size=1) + theme(legend.position = "none") + 
       geom_text(data = get_cluster_labels(), mapping = aes(x = X1, y = X2, label = clus), 
                 size = 4, colour='black') + ggtitle(isolate(input$dataset)) + scale_colour_hue() +
       theme(plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), 
@@ -113,14 +113,14 @@ server <- function(input,output,session)
     
   })
   output$plotgraph2<-renderPlot({
-    ggplot(get_tsne_gene(),aes(x=tSNE_1,y=tSNE_2)) + geom_point(aes(colour=gene),size=0.0001) +
+    ggplot(get_tsne_gene(),aes(x=tSNE_1,y=tSNE_2)) + geom_point(aes(colour=gene),size=1) +
       scale_color_gradient(low = 'lightgray', high = 'red') + ggtitle(isolate(input$gene)) + 
       theme(plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), 
             panel.grid.minor = element_blank(), panel.background = element_blank(), 
             axis.line = element_line(colour = "black"), legend.title=element_blank())
   })
   output$plotgraph3<-renderPlot({
-    ggplot(get_tsne(),aes(x=tSNE_1,y=tSNE_2,color=loc)) + geom_point(size=0.0001) +
+    ggplot(get_tsne(),aes(x=tSNE_1,y=tSNE_2,color=loc)) + geom_point(size=1) +
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
             panel.background = element_blank(), axis.line = element_line(colour = "black"),
             legend.title=element_blank()) + guides(colour = guide_legend(override.aes = list(size=2)))
