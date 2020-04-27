@@ -21,8 +21,10 @@ ui <- fluidPage(
         selected=sort(rownames(megasrat[[1]][['data']]))[1]
       ),
       selectInput("dataset", "Select a Dataset", choices = names(megasrat)),
-      actionButton("do", "Update View", icon=icon("refresh")
-    )
+      actionButton("do", "Update View", icon=icon("refresh")),
+      tags$div(class= "alert alert-info", style = "margin-top: 1rem;", checked = NA,
+        tags$p("Please note that the cell type labelled as neutrophils is more likely to be composed of monocytes.")
+      )
   ),
     mainPanel(
       conditionalPanel(
