@@ -22,8 +22,8 @@ ui <- fluidPage(
       ),
       selectInput("dataset", "Select a Dataset", choices = names(megasrat)),
       actionButton("do", "Update View", icon=icon("refresh")),
-      tags$div(class= "alert alert-info", style = "margin-top: 1rem;", checked = NA,
-        tags$p("Please note that the cell type labelled as neutrophils is more likely to be composed of monocytes.")
+      tags$div(class= "alert alert-info", style = "margin-top: 1.25rem;", checked = NA,
+        HTML("<p>Please note that the cell type labelled as neutrophils is more likely to be composed of monocytes. Updated annotations and data are also available at <a href='https://www.covid19cellatlas.org/' target='_blank'>covid19cellatlas.org</a>.</p>")
       )
   ),
     mainPanel(
